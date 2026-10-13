@@ -1,0 +1,108 @@
+______       
+|    |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ┌─────────────────────────────────────┐
+        │              USERS                  │
+        ├─────────────────────────────────────┤
+        │  PK  id          INTEGER            │
+        │  UK  login       VARCHAR(64)        │
+        │      password    VARCHAR(128)       │
+        │      fullname    VARCHAR(128)       │
+        │      phone       VARCHAR(32)        │
+        │      email       VARCHAR(128)       │
+        └─────────────────┬───────────────────┘
+                          │
+                          │  1 : N
+                          │  users.login
+                          │  ↕
+                          │  requests.user_login
+                          │
+        ┌─────────────────▼───────────────────┐
+        │             REQUESTS                │
+        ├─────────────────────────────────────┤
+        │  PK  id          INTEGER            │
+        │  FK  user_login  VARCHAR(64)  ──────┼──► USERS.login
+        │      room        VARCHAR(128)       │
+        │      date        VARCHAR(16)        │
+        │      payment     VARCHAR(64)        │
+        │      status      VARCHAR(64)        │
+        │      feedback    VARCHAR(512)       │
+        └─────────────────────────────────────┘
+
+
+        ┌─────────────────────────────────────┐
+        │          GALLERY_IMAGES             │
+        ├─────────────────────────────────────┤
+        │  PK  id          INTEGER            │
+        │      filename    VARCHAR(255)       │
+        └─────────────────────────────────────┘
