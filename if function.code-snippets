@@ -1,0 +1,193 @@
+{
+    "If Statement": {
+        "prefix": "if",
+        "body": [
+            "if ${1:condition}:",
+            "    ${2:pass}"
+        ],
+        "description": "Basic if statement"
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+  "ConfPortal New Request Template": {
+    "prefix": "newrequest",
+    "scope": "html, jinja, jinja-html, django-html",
+    "body": [
+      "{% extends \"base.html\" %}",
+      "{% block title %}Новая заявка{% endblock %}",
+      "{% block content %}",
+      "<div class=\"card\" style=\"max-width:520px;margin:0 auto\">",
+      "  <h1>Новая заявка на конференцию</h1>",
+      "  <div id=\"msg\">",
+      "    {% with msgs = get_flashed_messages(with_categories=true) %}",
+      "      {% for cat, m in msgs %}",
+      "        <div class=\"message {{ cat }}\">{{ m }}</div>",
+      "      {% endfor %}",
+      "    {% endwith %}",
+      "  </div>",
+      "  <form method=\"post\" action=\"{{ url_for('new_request') }}\">",
+      "    <div class=\"field\">",
+      "      <label>Помещение</label>",
+      "      <input type=\"text\" name=\"room\" placeholder=\"Например: Зал А-101\"",
+      "             value=\"{{ form.get('room', '') }}\" required>",
+      "    </div>",
+      "    <div class=\"field\">",
+      "      <label>Дата начала конференции</label>",
+      "      <input type=\"text\" name=\"date\" placeholder=\"ДД.ММ.ГГГГ\"",
+      "             value=\"{{ form.get('date', '') }}\" required>",
+      "    </div>",
+      "    <div class=\"field\">",
+      "      <label>Способ оплаты</label>",
+      "      <select name=\"payment\" required>",
+      "        <option value=\"\">— выберите —</option>",
+      "        <option value=\"Очное посещение\"",
+      "          {% if form.get('payment') == 'Очное посещение' %}selected{% endif %}>",
+      "          Очное посещение",
+      "        </option>",
+      "        <option value=\"Перевод по СБП\"",
+      "          {% if form.get('payment') == 'Перевод по системе СБП' %}selected{% endif %}>",
+      "          Перевод по системе СБП",
+      "        </option>",
+      "      </select>",
+      "    </div>",
+      "    <button type=\"submit\">Отправить</button>",
+      "  </form>",
+      "</div>",
+      "{% endblock %}"
+    ],
+    "description": "Шаблон new_request.html для ConfPortal с сохранением введённых значений через переменную form (для повторного рендера при ошибках валидации)"
+  },
+
+
+  
+  "ConfPortal My Requests Template": {
+    "prefix": "myrequests",
+    "scope": "html, jinja, jinja-html, django-html",
+    "body": [
+      "{% extends \"base.html\" %}",
+      "{% block title %}Мои заявки{% endblock %}",
+      "{% block content %}",
+      "<div class=\"card\">",
+      "  <h1>Мои заявки</h1>",
+      "  <div id=\"list\">",
+      "    {% if requests|length == 0 %}",
+      "      <p class=\"muted\">У вас пока нет заявок. <a href=\"{{ url_for('new_request') }}\" class=\"link\">Создать</a></p>",
+      "    {% else %}",
+      "      <table>",
+      "        <thead><tr>",
+      "          <th>Помещение</th><th>Дата</th><th>Оплата</th><th>Статус</th><th>Отзыв</th>",
+      "        </tr></thead>",
+      "        <tbody>",
+      "          {% for r in requests %}",
+      "          <tr>",
+      "            <td>{{ r.room }}</td>",
+      "            <td>{{ r.date }}</td>",
+      "            <td>{{ r.payment }}</td>",
+      "            <td>",
+      "              {% if r.status == 'Новая' %}<span class=\"status new\">{{ r.status }}</span>",
+      "              {% elif r.status == 'Мероприятие назначено' %}<span class=\"status scheduled\">{{ r.status }}</span>",
+      "              {% else %}<span class=\"status done\">{{ r.status }}</span>{% endif %}",
+      "            </td>",
+      "            <td>",
+      "              {% if r.feedback %}",
+      "                <em>{{ r.feedback }}</em>",
+      "              {% else %}",
+      "                <form method=\"post\" action=\"{{ url_for('feedback', req_id=r.id) }}\" style=\"display:flex;gap:6px\">",
+      "                  <input type=\"text\" name=\"text\" placeholder=\"Оставьте отзыв\" style=\"width:200px\">",
+      "                  <button type=\"submit\">Сохранить</button>",
+      "                </form>",
+      "              {% endif %}",
+      "            </td>",
+      "          </tr>",
+      "          {% endfor %}",
+      "        </tbody>",
+      "      </table>",
+      "    {% endif %}",
+      "  </div>",
+      "</div>",
+      "{% endblock %}"
+    ],
+    "description": "Шаблон my_requests.html для ConfPortal: таблица заявок пользователя со статусами, формой отзыва и сообщением при отсутствии заявок"
+  },
+
+
+
+}
