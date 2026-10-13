@@ -1,0 +1,222 @@
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from models import db, User, Request
+import re
+import os
+
+ADMIN_LOGIN = 'Conf2027'
+ADMIN_PASSWORD = 'Demo77'
+
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'confportal-secret-key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///confportal.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()
+
+
+# ===== Валидация =====
+def validate_login(v):
+    return '' if re.fullmatch(r'[A-Za-z0-9]{6,}', v or '') else 'Логин: латиница и цифры, не менее 6 символов'
+
+def validate_password(v):
+    return '' if v and len(v) >= 8 else 'Пароль: минимум 8 символов'
+
+def validate_fullname(v):
+    if not v: return 'ФИО: кириллица, минимум два слова'
+    if not re.fullmatch(r'[А-Яа-яЁё\s]+', v): return 'ФИО: кириллица, минимум два слова'
+    if len(v.split()) < 2: return 'ФИО: кириллица, минимум два слова'
+    return ''
+
+def validate_phone(v):
+    return '' if re.fullmatch(r'8\(\d{3}\)\d{3}-\d{2}-\d{2}', v or '') else 'Телефон: формат 8(XXX)XXX-XX-XX'
+
+def validate_email(v):
+    return '' if re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', v or '') else 'Некорректный e-mail'
+
+
+def current_user():
+    return session.get('login')
+
+
+def is_admin():
+    return session.get('login') == ADMIN_LOGIN
+
+
+@app.context_processor
+def inject_globals():
+    return dict(current=current_user(), is_admin=is_admin())
+
+IMAGE_DIR = os.path.join(app.static_folder, 'images')
+ALLOWED_EXT = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+
+# ===== Главная =====
+@app.route('/')
+def index():
+    images = []
+    if os.path.isdir(IMAGE_DIR):
+        images = sorted(
+            f for f in os.listdir(IMAGE_DIR)
+            if os.path.splitext(f)[1].lower() in ALLOWED_EXT
+        )
+    return render_template('index.html', images=images)
+
+
+# ===== Регистрация =====
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        data = {
+            'login':    request.form.get('login', '').strip(),
+            'password': request.form.get('password', ''),
+            'fullname': request.form.get('fullname', '').strip(),
+            'phone':    request.form.get('phone', '').strip(),
+            'email':    request.form.get('email', '').strip(),
+        }
+
+        for key, validator in [
+            ('login', validate_login), ('password', validate_password),
+            ('fullname', validate_fullname), ('phone', validate_phone),
+            ('email', validate_email),
+        ]:
+            err = validator(data[key])
+            if err:
+                flash(err, 'error')
+                # ВАЖНО: передаём data обратно в шаблон
+                return render_template('register.html', form=data)
+
+        if data['login'] == ADMIN_LOGIN or User.query.filter_by(login=data['login']).first():
+            flash('Пользователь с таким логином уже существует', 'error')
+            return render_template('register.html', form=data)
+
+        db.session.add(User(**data))
+        db.session.commit()
+        flash('Пользователь успешно создан. Перенаправляем на вход...', 'success')
+        return redirect(url_for('login'))
+
+    # GET — пустая форма
+    return render_template('register.html', form={})
+
+
+# ===== Вход =====
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        lg = request.form.get('login', '').strip()
+        pw = request.form.get('password', '')
+        form = {'login': lg}
+
+        if not lg or not pw:
+            flash('Заполните все поля', 'error')
+            return render_template('login.html', form=form)
+
+        if lg == ADMIN_LOGIN and pw == ADMIN_PASSWORD:
+            session['login'] = lg
+            return redirect(url_for('admin'))
+
+        user = User.query.filter_by(login=lg).first()
+        if not user:
+            flash('Пользователь не найден', 'error')
+            return render_template('login.html', form=form)
+        if user.password != pw:
+            flash('Неверный пароль', 'error')
+            return render_template('login.html', form=form)
+
+        session['login'] = lg
+        return redirect(url_for('profile'))
+
+    return render_template('login.html', form={})
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
+# ===== Профиль =====
+@app.route('/profile')
+def profile():
+    if not current_user():
+        return redirect(url_for('login'))
+    user = User.query.filter_by(login=current_user()).first()
+    return render_template('profile.html', user=user)
+
+
+# ===== Новая заявка =====
+@app.route('/new-request', methods=['GET', 'POST'])
+def new_request():
+    if not current_user():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        form = {
+            'room':    request.form.get('room', '').strip(),
+            'date':    request.form.get('date', '').strip(),
+            'payment': request.form.get('payment', '').strip(),
+        }
+
+        if not re.fullmatch(r'\d{2}\.\d{2}\.\d{4}', form['date'] or ''):
+            flash('Дата должна быть в формате ДД.ММ.ГГГГ', 'error')
+            return render_template('new_request.html', form=form)
+        if not form['room'] or not form['payment']:
+            flash('Заполните все поля', 'error')
+            return render_template('new_request.html', form=form)
+
+        db.session.add(Request(
+            user_login=current_user(), room=form['room'], date=form['date'],
+            payment=form['payment'], status='Новая', feedback=''
+        ))
+        db.session.commit()
+        flash('Заявка отправлена на рассмотрение', 'success')
+        return redirect(url_for('my_requests'))
+
+    return render_template('new_request.html', form={})
+
+
+# ===== Мои заявки =====
+@app.route('/my-requests')
+def my_requests():
+    if not current_user():
+        return redirect(url_for('login'))
+    items = Request.query.filter_by(user_login=current_user()).all()
+    return render_template('my_requests.html', requests=items)
+
+
+@app.route('/feedback/<int:req_id>', methods=['POST'])
+def feedback(req_id):
+    if not current_user():
+        return redirect(url_for('login'))
+    text = request.form.get('text', '').strip()
+    req = Request.query.get_or_404(req_id)
+    if req.user_login == current_user() and text:
+        req.feedback = text
+        db.session.commit()
+    return redirect(url_for('my_requests'))
+
+
+# ===== Админка =====
+@app.route('/admin')
+def admin():
+    if not is_admin():
+        return redirect(url_for('login'))
+    items = Request.query.order_by(Request.id.desc()).all()
+    return render_template('admin.html', requests=items)
+
+
+@app.route('/set-status/<int:req_id>/<status>', methods=['POST'])
+def set_status(req_id, status):
+    if not is_admin():
+        return redirect(url_for('login'))
+    req = Request.query.get_or_404(req_id)
+    if status in ('Мероприятие назначено', 'Завершено'):
+        req.status = status
+        db.session.commit()
+    return redirect(url_for('admin'))
+
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=5000, debug=True)

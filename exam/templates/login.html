@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Вход{% endblock %}
+{% block content %}
+<div class="card" style="max-width:420px;margin:0 auto">
+  <h1>Вход в систему</h1>
+  <div id="msg">
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, m in msgs %}
+        <div class="message {{ cat }}">{{ m }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+  <form method="post" action="{{ url_for('login') }}">
+    <div class="field">
+      <label>Логин</label>
+      <input type="text" name="login" data-testid="login-login"
+             value="{{ form.get('login', '') }}" required>
+    </div>
+    <div class="field">
+      <label>Пароль</label>
+      <input type="password" name="password" data-testid="login-password" required>
+    </div>
+    <button type="submit" data-testid="login-submit">Войти</button>
+  </form>
+  <a href="{{ url_for('register') }}" class="link">Еще не зарегистрированы? Регистрация</a>
+</div>
+{% endblock %}
+

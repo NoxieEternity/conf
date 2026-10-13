@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Новая заявка{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px;margin:0 auto">
+  <h1>Новая заявка на конференцию</h1>
+  <div id="msg">
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, m in msgs %}
+        <div class="message {{ cat }}">{{ m }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+  <form method="post" action="{{ url_for('new_request') }}">
+    <div class="field">
+      <label>Помещение</label>
+      <input type="text" name="room" placeholder="Например: Зал А-101"
+             value="{{ form.get('room', '') }}" required>
+    </div>
+    <div class="field">
+      <label>Дата начала конференции</label>
+      <input type="text" name="date" placeholder="ДД.ММ.ГГГГ"
+             value="{{ form.get('date', '') }}" required>
+    </div>
+    <div class="field">
+      <label>Способ оплаты</label>
+      <select name="payment" required>
+        <option value="">— выберите —</option>
+        <option value="Очное посещение"
+          {% if form.get('payment') == 'Очное посещение' %}selected{% endif %}>
+          Очное посещение
+        </option>
+        <option value="Перевод по СБП"
+          {% if form.get('payment') == 'Перевод по системе СБП' %}selected{% endif %}>
+          Перевод по системе СБП
+        </option>
+      </select>
+    </div>
+    <button type="submit">Отправить</button>
+  </form>
+</div>
+{% endblock %}

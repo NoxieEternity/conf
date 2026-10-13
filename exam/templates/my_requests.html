@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Мои заявки{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Мои заявки</h1>
+  <div id="list">
+    {% if requests|length == 0 %}
+      <p class="muted">У вас пока нет заявок. <a href="{{ url_for('new_request') }}" class="link">Создать</a></p>
+    {% else %}
+      <table>
+        <thead><tr>
+          <th>Помещение</th><th>Дата</th><th>Оплата</th><th>Статус</th><th>Отзыв</th>
+        </tr></thead>
+        <tbody>
+          {% for r in requests %}
+          <tr>
+            <td>{{ r.room }}</td>
+            <td>{{ r.date }}</td>
+            <td>{{ r.payment }}</td>
+            <td>
+              {% if r.status == 'Новая' %}<span class="status new">{{ r.status }}</span>
+              {% elif r.status == 'Мероприятие назначено' %}<span class="status scheduled">{{ r.status }}</span>
+              {% else %}<span class="status done">{{ r.status }}</span>{% endif %}
+            </td>
+            <td>
+              {% if r.feedback %}
+                <em>{{ r.feedback }}</em>
+              {% else %}
+                <form method="post" action="{{ url_for('feedback', req_id=r.id) }}" style="display:flex;gap:6px">
+                  <input type="text" name="text" placeholder="Оставьте отзыв" style="width:200px">
+                  <button type="submit">Сохранить</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

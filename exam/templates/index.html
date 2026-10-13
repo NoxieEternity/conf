@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}ConfPortal — Конференции 2027{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Конференции и деловые мероприятия 2027</h1>
+  <p>Организуйте конференции в комфортных помещениях. Быстрая подача заявки, прозрачный статус, удобная оплата — очно или через СБП.</p>
+  <a href="{{ url_for('register') }}" class="btn" style="margin-top:20px;background:#fff;color:var(--blue-900)">Начать</a>
+</section>
+
+<h2>Наши площадки</h2>
+<div class="gallery">
+  {% for img in images %}
+    <img src="{{ url_for('static', filename='images/' ~ img) }}" alt="Площадка">
+  {% endfor %}
+</div>
+{% endblock %}
+{% block footer %}<footer>© 2027 ConfPortal</footer>{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Регистрация{% endblock %}
+{% block content %}
+<div class="card" style="max-width:480px;margin:0 auto">
+  <h1>Регистрация</h1>
+  <div id="msg">
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, m in msgs %}
+        <div class="message {{ cat }}">{{ m }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+  <form method="post" action="{{ url_for('register') }}">
+    <div class="field">
+      <label>Логин</label>
+      <input type="text" name="login" data-testid="reg-login"
+             value="{{ form.get('login', '') }}" required>
+    </div>
+    <div class="field">
+      <label>Пароль</label>
+      <input type="password" name="password" data-testid="reg-password"
+             value="{{ form.get('password', '') }}" required>
+    </div>
+    <div class="field">
+      <label>ФИО</label>
+      <input type="text" name="fullname" data-testid="reg-fullname"
+             placeholder="Иванов Иван Иванович"
+             value="{{ form.get('fullname', '') }}" required>
+    </div>
+    <div class="field">
+      <label>Телефон</label>
+      <input type="text" name="phone" data-testid="reg-phone"
+             placeholder="8(999)123-45-67"
+             value="{{ form.get('phone', '') }}" required>
+    </div>
+    <div class="field">
+      <label>E-mail</label>
+      <input type="text" name="email" data-testid="reg-email"
+             placeholder="user@mail.ru"
+             value="{{ form.get('email', '') }}" required>
+    </div>
+    <button type="submit" data-testid="reg-submit">Создать пользователя</button>
+  </form>
+  <a href="{{ url_for('login') }}" class="link">Уже зарегистрированы? Войти</a>
+</div>
+{% endblock %}
